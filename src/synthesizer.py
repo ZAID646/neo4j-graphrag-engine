@@ -1,5 +1,6 @@
 from openai import OpenAI
 from src.config import OPENCODE_ZEN_API_KEY, LLM_BASE_URL, LLM_MODEL
+from src.retry import with_retry
 
 
 _client: OpenAI | None = None
@@ -21,9 +22,18 @@ Rules:
 - Keep the answer concise but thorough."""
 
 
-def synthesize(query: str, vector_context: list[str], graph_context: list[str]) -> str:
+@with_retry(max_retries=5, base_delay=3.0)
+def _call_synthesis(messages: list[dict]):
     client = _get_client()
+    return client.chat.completions.create(
+        model=LLM_MODEL,
+        messages=messages,
+        max_tokens=1024,
+        temperature=0.1,
+    )
 
+
+def synthesize(query: str, vector_context: list[str], graph_context: list[str]) -> str:
     text_section = "\n\n".join(vector_context[:5]) if vector_context else "No text context available."
     graph_section = "\n".join(graph_context[:20]) if graph_context else "No graph context available."
 
@@ -33,14 +43,9 @@ def synthesize(query: str, vector_context: list[str], graph_context: list[str]) 
         f"Graph context (connected entities):\n{graph_section}"
     )
 
-    response = client.chat.completions.create(
-        model=LLM_MODEL,
-        messages=[
-            {"role": "system", "content": _SYNTHESIS_SYSTEM_PROMPT},
-            {"role": "user", "content": user_message},
-        ],
-        max_tokens=1024,
-        temperature=0.1,
-    )
+    response = _call_synthesis([
+        {"role": "system", "content": _SYNTHESIS_SYSTEM_PROMPT},
+        {"role": "user", "content": user_message},
+    ])
 
     return response.choices[0].message.content or ""

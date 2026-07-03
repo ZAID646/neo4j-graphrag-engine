@@ -1,8 +1,10 @@
 import json
 import re
+import time
 from openai import OpenAI
 from src.models import Chunk, Entity, Relationship
 from src.config import OPENCODE_ZEN_API_KEY, LLM_BASE_URL, LLM_MODEL
+from src.retry import with_retry
 
 
 _client: OpenAI | None = None
@@ -28,21 +30,28 @@ Output ONLY valid JSON array with no markdown:
 ]"""
 
 
-def extract_knowledge(chunks: list[Chunk]) -> tuple[list[Entity], list[Relationship]]:
+@with_retry(max_retries=5, base_delay=3.0)
+def _call_extraction(text: str):
     client = _get_client()
+    return client.chat.completions.create(
+        model=LLM_MODEL,
+        messages=[
+            {"role": "system", "content": _EXTRACTION_SYSTEM_PROMPT},
+            {"role": "user", "content": text},
+        ],
+        max_tokens=2048,
+        temperature=0.1,
+    )
+
+
+def extract_knowledge(chunks: list[Chunk]) -> tuple[list[Entity], list[Relationship]]:
     all_entities: list[Entity] = []
     all_relationships: list[Relationship] = []
 
-    for chunk in chunks:
-        response = client.chat.completions.create(
-            model=LLM_MODEL,
-            messages=[
-                {"role": "system", "content": _EXTRACTION_SYSTEM_PROMPT},
-                {"role": "user", "content": chunk.text},
-            ],
-            max_tokens=2048,
-            temperature=0.1,
-        )
+    for i, chunk in enumerate(chunks):
+        if i > 0:
+            time.sleep(3.0)
+        response = _call_extraction(chunk.text)
 
         raw = response.choices[0].message.content or "[]"
         extracted = _parse_extraction(raw)
