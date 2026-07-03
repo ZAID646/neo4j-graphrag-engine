@@ -1,4 +1,7 @@
+from pathlib import Path
+
 import streamlit as st
+
 from src.pipeline import ingest, query
 
 
@@ -40,10 +43,51 @@ def render_ui():
     with tab2:
         docs_path = st.text_input("Documents directory", value="data/sample_docs")
 
+        _render_sample_docs()
+
         if st.button("Ingest", type="secondary"):
-            with st.spinner("Ingesting documents..."):
-                try:
-                    ingest(docs_path)
-                    st.success("Ingestion complete")
-                except Exception as e:
-                    st.error(f"Ingestion failed: {e}")
+            _run_ingestion(docs_path)
+
+
+def _render_sample_docs():
+    docs_dir = Path("data/sample_docs")
+    if not docs_dir.exists():
+        return
+
+    md_files = sorted(docs_dir.glob("*.md"))
+    txt_files = sorted(docs_dir.glob("*.txt"))
+    files = md_files + txt_files
+
+    if not files:
+        return
+
+    st.divider()
+    st.subheader("Source Documents")
+
+    for f in files:
+        content = f.read_text(encoding="utf-8")
+        escaped = content.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        html = (
+            f"<div style='border:1px solid #e2e8f0;border-radius:8px;"
+            f"padding:12px 16px;margin-bottom:8px;max-height:200px;"
+            f"overflow-y:auto;font-size:13px;'>"
+            f"<b>{f.name}</b><br>{escaped}</div>"
+        )
+        st.markdown(html, unsafe_allow_html=True)
+
+
+def _run_ingestion(docs_path: str):
+    with st.status("Preparing ingestion...", expanded=True) as status:
+        def on_msg(msg: str):
+            if msg.startswith("extracting:"):
+                status.update(label=msg, state="running")
+            else:
+                status.update(label=msg, state="running")
+
+        try:
+            ingest(docs_path, status_callback=on_msg)
+            status.update(label="Ingestion complete", state="complete")
+            st.success("All data ingested successfully.")
+        except Exception as e:
+            status.update(label=f"Ingestion failed: {e}", state="error")
+            st.error(f"Ingestion failed: {e}")

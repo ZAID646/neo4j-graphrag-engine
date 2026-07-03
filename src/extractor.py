@@ -44,13 +44,17 @@ def _call_extraction(text: str):
     )
 
 
-def extract_knowledge(chunks: list[Chunk]) -> tuple[list[Entity], list[Relationship]]:
+def extract_knowledge(chunks: list[Chunk], status_callback=None) -> tuple[list[Entity], list[Relationship]]:
     all_entities: list[Entity] = []
     all_relationships: list[Relationship] = []
 
     for i, chunk in enumerate(chunks):
         if i > 0:
             time.sleep(3.0)
+
+        if status_callback:
+            status_callback(f"extracting: Chunk {i + 1}/{len(chunks)} - {chunk.source}")
+
         response = _call_extraction(chunk.text)
 
         raw = response.choices[0].message.content or "[]"
