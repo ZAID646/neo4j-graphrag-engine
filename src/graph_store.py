@@ -1,9 +1,10 @@
-from neo4j import GraphDatabase
+from typing import Optional
+from neo4j import GraphDatabase, Driver
 from src.models import Entity, Relationship
 from src.config import NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD, NEO4J_DATABASE
 
 
-_driver: GraphDatabase.driver | None = None
+_driver: Optional[Driver] = None
 
 
 def _get_driver():

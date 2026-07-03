@@ -1,10 +1,11 @@
+from typing import Optional
 from pinecone import Pinecone, ServerlessSpec
 from src.models import Chunk
 from src.config import PINECONE_API_KEY, PINECONE_INDEX_NAME
 from src.embedder import embedding_dimension
 
 
-_pc: Pinecone | None = None
+_pc: Optional[Pinecone] = None
 _index = None
 
 
