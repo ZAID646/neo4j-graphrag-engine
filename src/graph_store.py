@@ -58,7 +58,7 @@ def get_connected_entities(entity_name: str, depth: int = 2) -> list[dict]:
         return [dict(r) for r in result]
 
 
-def extract_entity_names(query: str) -> list[str]:
+def extract_entity_names() -> list[str]:
     with _get_driver().session(database=NEO4J_DATABASE) as session:
         result = session.run(
             "MATCH (e:Entity) RETURN e.name AS name LIMIT 200"
