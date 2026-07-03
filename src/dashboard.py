@@ -47,7 +47,6 @@ def render_ui():
             _run_ingestion(docs_path)
 
         _render_sample_docs()
-            _run_ingestion(docs_path)
 
 
 def _render_sample_docs():
