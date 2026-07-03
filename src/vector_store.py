@@ -56,3 +56,9 @@ def semantic_search(query_vector: list[float], top_k: int = 5) -> list[dict]:
     result = index.query(vector=query_vector, top_k=top_k, include_metadata=True)
     return [{"id": m.id, "score": m.score, "text": m.metadata.get("text", "")}
             for m in result.matches]
+
+
+def close():
+    global _pc, _index
+    _index = None
+    _pc = None
