@@ -43,9 +43,10 @@ def render_ui():
     with tab2:
         docs_path = st.text_input("Documents directory", value="data/sample_docs")
 
-        _render_sample_docs()
-
         if st.button("Ingest", type="secondary"):
+            _run_ingestion(docs_path)
+
+        _render_sample_docs()
             _run_ingestion(docs_path)
 
 
