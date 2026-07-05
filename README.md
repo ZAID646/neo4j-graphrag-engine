@@ -32,12 +32,12 @@ Raw Documents (.md / .txt)
   v                                                 v
 [LLM Extractor] (DeepSeek V4)              [sentence-transformers]
   (entities + relationships                   (384d embeddings)
-   per chunk)                                    │
+   per chunk)                                     │
   │                                               v
   v                                       [Pinecone Vector DB]
 [Neo4j Aura Graph DB]                    (cosine similarity search)
-  (Entity nodes +                               │
-   RELATES_TO edges)                             │
+  (Entity nodes +                                 │
+   RELATES_TO edges)                              │
   │                                               │
   └───────────────────┬───────────────────────────┘
                       v
